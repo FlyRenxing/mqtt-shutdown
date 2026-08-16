@@ -9,19 +9,19 @@ use windows_sys::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows_sys::Win32::System::Threading::{CreateMutexW, GetCurrentThreadId};
 use windows_sys::Win32::UI::Shell::{
     NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE, NIM_MODIFY, NOTIFYICONDATAW,
-    Shell_NotifyIconW,
+    SetCurrentProcessExplicitAppUserModelID, Shell_NotifyIconW,
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CallNextHookEx, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyMenu,
-    DestroyWindow, DispatchMessageW, FindWindowW, GetCursorPos, GetWindowLongPtrW, MF_CHECKED,
-    MF_SEPARATOR, MF_STRING,
-    HCBT_DESTROYWND, HHOOK, HTCLIENT, IDI_APPLICATION, IMAGE_ICON, LR_DEFAULTSIZE, LR_LOADFROMFILE,
-    LoadIconW, LoadImageW, MSG, PM_REMOVE, PeekMessageW, PostMessageW, PostQuitMessage,
-    RegisterClassW, SW_HIDE, SW_RESTORE, SW_SHOW, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
-    SWP_NOZORDER, SetForegroundWindow, SetWindowLongPtrW, SetWindowPos, SetWindowsHookExW,
-    ShowWindow, TPM_BOTTOMALIGN, TPM_LEFTALIGN, TPM_RIGHTBUTTON, TrackPopupMenu, TranslateMessage,
-    UnhookWindowsHookEx, WM_APP, WM_CLOSE, WM_COMMAND, WM_DESTROY, WM_LBUTTONUP, WM_MOUSEMOVE,
-    WM_NULL, WM_RBUTTONUP, WM_SETCURSOR, WNDCLASSW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+    DestroyWindow, DispatchMessageW, FindWindowW, GetCursorPos, GetWindowLongPtrW, ICON_BIG,
+    ICON_SMALL, IDI_APPLICATION, IMAGE_ICON, LR_DEFAULTSIZE, LR_LOADFROMFILE, LoadIconW,
+    LoadImageW, MF_CHECKED, MF_SEPARATOR, MF_STRING, MSG, PM_REMOVE, PeekMessageW, PostMessageW,
+    PostQuitMessage, RegisterClassW, SW_HIDE, SW_RESTORE, SW_SHOW, SWP_NOACTIVATE, SWP_NOMOVE,
+    SWP_NOSIZE, SWP_NOZORDER, SendMessageW, SetForegroundWindow, SetWindowLongPtrW, SetWindowPos,
+    SetWindowsHookExW, ShowWindow, TPM_BOTTOMALIGN, TPM_LEFTALIGN, TPM_RIGHTBUTTON,
+    TrackPopupMenu, TranslateMessage, UnhookWindowsHookEx, WM_APP, WM_CLOSE, WM_COMMAND,
+    WM_DESTROY, WM_LBUTTONUP, WM_MOUSEMOVE, WM_NULL, WM_RBUTTONUP, WM_SETCURSOR, WM_SETICON,
+    WNDCLASSW, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, HCBT_DESTROYWND, HHOOK, HTCLIENT,
 };
 
 use crate::config::{APP_ID, APP_TITLE};
@@ -40,8 +40,18 @@ static TRAY_ADDED: AtomicBool = AtomicBool::new(false);
 static CBT_HOOK: AtomicPtr<core::ffi::c_void> = AtomicPtr::new(core::ptr::null_mut());
 static SINGLE_INSTANCE: OnceLock<isize> = OnceLock::new();
 
+const APP_USER_MODEL_ID: &str = "FlyRenxing.MqttShutdown";
+const IDI_APP: isize = 1;
+
 pub fn take_hidden_flag() -> bool {
     std::env::args().any(|arg| arg == "--hidden" || arg == "/hidden")
+}
+
+pub fn set_app_user_model_id() {
+    let id = wide(APP_USER_MODEL_ID);
+    unsafe {
+        let _ = SetCurrentProcessExplicitAppUserModelID(id.as_ptr());
+    }
 }
 
 pub fn claim_single_instance() -> bool {
@@ -69,10 +79,24 @@ pub fn attach_main_window() -> bool {
         return false;
     }
     MAIN_HWND.store(hwnd, Ordering::SeqCst);
+    apply_window_icon(hwnd);
     install_cbt_hook();
     create_message_window();
     add_or_update_tray();
     true
+}
+
+fn apply_window_icon(hwnd: HWND) {
+    let big = load_icon_sized(32);
+    let small = load_icon_sized(16);
+    unsafe {
+        if !big.is_null() {
+            SendMessageW(hwnd, WM_SETICON, ICON_BIG as usize, big as LPARAM);
+        }
+        if !small.is_null() {
+            SendMessageW(hwnd, WM_SETICON, ICON_SMALL as usize, small as LPARAM);
+        }
+    }
 }
 
 pub fn hide_to_tray() {
@@ -258,6 +282,25 @@ fn notify_data(hwnd: HWND) -> NOTIFYICONDATAW {
 }
 
 fn load_icon() -> windows_sys::Win32::UI::WindowsAndMessaging::HICON {
+    load_icon_sized(0)
+}
+
+fn load_icon_sized(size: i32) -> windows_sys::Win32::UI::WindowsAndMessaging::HICON {
+    let size_flags = if size == 0 { LR_DEFAULTSIZE } else { 0 };
+    unsafe {
+        let module = GetModuleHandleW(core::ptr::null());
+        let from_exe = LoadImageW(
+            module,
+            IDI_APP as *const u16,
+            IMAGE_ICON,
+            size,
+            size,
+            size_flags,
+        );
+        if !from_exe.is_null() {
+            return from_exe;
+        }
+    }
     if let Some(path) = crate::config::icon_path() {
         let wide_path = wide(&path.to_string_lossy());
         unsafe {
@@ -265,9 +308,9 @@ fn load_icon() -> windows_sys::Win32::UI::WindowsAndMessaging::HICON {
                 core::ptr::null_mut(),
                 wide_path.as_ptr(),
                 IMAGE_ICON,
-                0,
-                0,
-                LR_LOADFROMFILE | LR_DEFAULTSIZE,
+                size,
+                size,
+                LR_LOADFROMFILE | size_flags,
             );
             if !icon.is_null() {
                 return icon;

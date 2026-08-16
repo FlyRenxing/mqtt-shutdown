@@ -30,9 +30,11 @@
 
 ## 运行
 
-1. 需要已安装的 [Windows App SDK](https://learn.microsoft.com/windows/apps/windows-app-sdk/) 运行时（本程序按官方 framework-dependent 方式启动）。
-2. 打开 `mqtt-shutdown.exe`。第一次使用先到「连接」页填写服务器、Client ID 和主题。
-3. 加 `--hidden` 时只进托盘，不弹出主窗口（开机自启会这样启动）。
+到 [Releases / Beta](https://github.com/FlyRenxing/mqtt-shutdown/releases/tag/beta) 下载 `MQTT关机.exe`。第一次启动会把 WinUI 运行时解压到 `%LOCALAPPDATA%\MqttShutdown\runtime`，之后可直接用。
+
+1. 打开后先到「连接」页填写服务器、Client ID 和主题。
+2. 加 `--hidden` 时只进托盘，不弹出主窗口（开机自启会这样启动）。
+3. 推送到 `main` 会自动打包并更新 Beta 发布。
 
 ## 从源码构建
 
@@ -52,7 +54,15 @@ git clone --depth 1 https://github.com/microsoft/windows-rs.git ..\vendor\window
 cargo build --release
 ```
 
-可执行文件：`target\release\mqtt-shutdown.exe`。
+开发时的可执行文件：`target\release\mqtt-shutdown.exe`。
+
+发布用的单文件包：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\pack.ps1
+```
+
+生成 `dist\MQTT关机.exe`。推送到 `main` 后，GitHub Actions 会自动做同样的打包并更新 [Beta](https://github.com/FlyRenxing/mqtt-shutdown/releases/tag/beta)。
 
 目录约定：
 

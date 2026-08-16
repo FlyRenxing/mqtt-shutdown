@@ -14,6 +14,7 @@ use crate::config::{APP_TITLE, icon_path};
 
 fn main() {
     install_panic_log();
+    tray::set_app_user_model_id();
     if !tray::claim_single_instance() {
         return;
     }

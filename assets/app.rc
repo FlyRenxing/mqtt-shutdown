@@ -1,0 +1,27 @@
+1 ICON "app.ico"
+
+1 VERSIONINFO
+FILEVERSION 0,2,0,0
+PRODUCTVERSION 0,2,0,0
+FILEOS 0x40004
+FILETYPE 0x1
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404B0"
+        BEGIN
+            VALUE "CompanyName", "FlyRenxing"
+            VALUE "FileDescription", "MQTT关机"
+            VALUE "FileVersion", "0.2.0"
+            VALUE "InternalName", "mqtt-shutdown"
+            VALUE "OriginalFilename", "mqtt-shutdown.exe"
+            VALUE "ProductName", "MQTT关机"
+            VALUE "ProductVersion", "0.2.0"
+            VALUE "LegalCopyright", "Copyright (c) 2026 MQTT关机 contributors"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0804, 1200
+    END
+END

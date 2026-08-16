@@ -1,4 +1,6 @@
 /target
+/dist
+/tools/stub/target
 **/*.rs.bk
 .idea/
 .vscode/

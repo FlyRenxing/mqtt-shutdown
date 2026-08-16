@@ -27,6 +27,7 @@ windows-sys = { version = "0.59", features = [
 ] }
 
 [build-dependencies]
+embed-resource = "3.0"
 windows-reactor-setup = { path = "../vendor/windows-rs/crates/libs/reactor-setup" }
 
 [profile.release]

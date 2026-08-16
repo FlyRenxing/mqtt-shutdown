@@ -1,0 +1,50 @@
+name: beta
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Clone windows-rs
+        run: |
+          $dest = Join-Path (Split-Path -Parent "${{ github.workspace }}") "vendor\windows-rs"
+          if (-not (Test-Path $dest)) {
+            git clone --depth 1 https://github.com/microsoft/windows-rs.git $dest
+          }
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Pack single-file exe
+        run: powershell -NoProfile -ExecutionPolicy Bypass -File tools/pack.ps1
+
+      - name: Publish beta
+        uses: ncipollo/release-action@v1
+        with:
+          tag: beta
+          name: Beta
+          commit: ${{ github.sha }}
+          prerelease: true
+          allowUpdates: true
+          replacesArtifacts: true
+          makeLatest: false
+          artifacts: dist/MQTT关机.exe
+          body: |
+            自动构建的预发布包。
+
+            - 提交：`${{ github.sha }}`
+            - 下载 `MQTT关机.exe` 即可运行（首次启动会解压 WinUI 运行时到 `%LOCALAPPDATA%\MqttShutdown\runtime`）
+            - 关闭窗口后会留在托盘

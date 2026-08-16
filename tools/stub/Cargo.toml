@@ -1,0 +1,19 @@
+[package]
+name = "mqtt-shutdown-stub"
+version = "0.2.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[build-dependencies]
+embed-resource = "3.0"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
