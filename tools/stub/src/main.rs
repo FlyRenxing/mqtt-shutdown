@@ -2,11 +2,12 @@
 
 use std::env;
 use std::fs;
-use std::io;
+use std::io::{self, Read};
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+use flate2::read::GzDecoder;
 use windows_sys::Win32::UI::WindowsAndMessaging::{MB_ICONERROR, MB_OK, MessageBoxW};
 
 const CREATE_NO_WINDOW: u32 = 0x0800_0000;
@@ -21,8 +22,8 @@ fn main() {
     let id = payload_id();
     let ready = fs::read_to_string(&stamp).ok().is_some_and(|s| s == id);
     if !ready {
-        if let Err(err) = extract_tar(PAYLOAD, &dest) {
-            fatal(&format!("无法解压运行时: {err}"));
+        if let Err(err) = extract_payload(PAYLOAD, &dest) {
+            fatal(&format!("无法解压程序: {err}"));
         }
         let _ = fs::write(&stamp, id);
     }
@@ -55,6 +56,18 @@ fn payload_id() -> String {
         hash = hash.wrapping_mul(0x0100_0193);
     }
     format!("{:08x}-{}", hash, PAYLOAD.len())
+}
+
+fn extract_payload(bytes: &[u8], dest: &Path) -> io::Result<()> {
+    let tar = if bytes.len() >= 2 && bytes[0] == 0x1f && bytes[1] == 0x8b {
+        let mut dec = GzDecoder::new(bytes);
+        let mut out = Vec::new();
+        dec.read_to_end(&mut out)?;
+        out
+    } else {
+        bytes.to_vec()
+    };
+    extract_tar(&tar, dest)
 }
 
 fn extract_tar(bytes: &[u8], dest: &Path) -> io::Result<()> {

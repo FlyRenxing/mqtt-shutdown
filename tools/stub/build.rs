@@ -21,6 +21,6 @@ fn main() {
         .join("assets")
         .join("app.rc");
     if rc.is_file() {
-        embed_resource::compile(rc, embed_resource::NONE);
+        let _ = embed_resource::compile(rc, embed_resource::NONE);
     }
 }

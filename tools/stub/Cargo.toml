@@ -1,10 +1,11 @@
 [package]
 name = "mqtt-shutdown-stub"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 publish = false
 
 [dependencies]
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 windows-sys = { version = "0.59", features = [
     "Win32_Foundation",
     "Win32_UI_WindowsAndMessaging",

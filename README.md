@@ -30,7 +30,9 @@
 
 ## 运行
 
-到 [Releases / Beta](https://github.com/FlyRenxing/mqtt-shutdown/releases/tag/beta) 下载 `mqtt-shutdown.exe`。第一次启动会把 WinUI 运行时解压到 `%LOCALAPPDATA%\MqttShutdown\runtime`，之后可直接用。
+到 [Releases / Beta](https://github.com/FlyRenxing/mqtt-shutdown/releases/tag/beta) 下载 `mqtt-shutdown.exe`。第一次启动会把程序解压到 `%LOCALAPPDATA%\MqttShutdown\runtime`。
+
+界面使用系统里的 [Windows App Runtime](https://learn.microsoft.com/windows/apps/windows-app-sdk/downloads)（WinUI 3）。本机没有时，启动会弹出官方安装提示。
 
 1. 打开后先到「连接」页填写服务器、Client ID 和主题。
 2. 加 `--hidden` 时只进托盘，不弹出主窗口（开机自启会这样启动）。
