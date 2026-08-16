@@ -26,7 +26,7 @@ impl Page {
             Self::Home => "home",
             Self::Control => "control",
             Self::Connect => "connect",
-            Self::Settings => "settings",
+            Self::Settings => "prefs",
         }
     }
 
@@ -34,7 +34,7 @@ impl Page {
         match tag {
             "control" => Self::Control,
             "connect" => Self::Connect,
-            "settings" | "" => Self::Settings,
+            "prefs" => Self::Settings,
             _ => Self::Home,
         }
     }
@@ -142,7 +142,7 @@ pub fn app(cx: &mut RenderCx) -> Element {
             NavViewItem::new("主页").tag("home").icon(Symbol::Home),
             NavViewItem::new("电源").tag("control").icon(Symbol::Remote),
             NavViewItem::new("连接").tag("connect").icon(Symbol::Globe),
-            NavViewItem::new("设置").tag("settings").icon(Symbol::Setting),
+            NavViewItem::new("设置").tag("prefs").icon(Symbol::Setting),
         ],
         content,
     )
@@ -487,7 +487,8 @@ fn settings_page(_: &(), cx: &mut RenderCx) -> Element {
                 vstack((
                     body_strong("MQTT关机"),
                     caption("用 MQTT 指令关闭或重启这台 Windows 电脑。").opacity(0.72),
-                    HyperlinkButton::new(REPO_URL).navigate_uri(REPO_URL),
+                    caption(REPO_URL).opacity(0.72).wrap(),
+                    button("打开项目主页").on_click(crate::config::open_repo),
                     caption(format!("配置文件  {}", settings_path().display()))
                         .opacity(0.6)
                         .wrap(),

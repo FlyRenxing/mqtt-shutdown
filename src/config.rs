@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 
 pub const APP_TITLE: &str = "MQTT关机";
 pub const APP_ID: &str = "MqttShutdown";
-pub const REPO_URL: &str = "https://github.com/renxing/mqtt-shutdown";
+pub const REPO_URL: &str = "https://github.com/FlyRenxing/mqtt-shutdown";
 pub const DEFAULT_DELAY_SECS: u32 = 30;
 pub const MIN_DELAY_SECS: f64 = 0.0;
 pub const MAX_DELAY_SECS: f64 = 600.0;
@@ -104,6 +104,15 @@ fn bundled_icon() -> Option<PathBuf> {
 
 pub fn default_host_hint() -> &'static str {
     "例如 mqtt.bemfa.com"
+}
+
+pub fn open_repo() {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let _ = std::process::Command::new("explorer.exe")
+        .arg(REPO_URL)
+        .creation_flags(CREATE_NO_WINDOW)
+        .spawn();
 }
 
 fn default_host() -> String {

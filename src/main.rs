@@ -13,12 +13,24 @@ use windows_reactor::*;
 use crate::config::{APP_TITLE, icon_path};
 
 fn main() {
+    install_panic_log();
     if !tray::claim_single_instance() {
         return;
     }
     if let Err(err) = run() {
         tray::message_box(&format!("{err}"));
     }
+}
+
+fn install_panic_log() {
+    let path = crate::config::data_dir().join("panic.log");
+    std::panic::set_hook(Box::new(move |info| {
+        let backtrace = std::backtrace::Backtrace::force_capture();
+        let text = format!("{info}\n{backtrace}\n");
+        let _ = std::fs::create_dir_all(path.parent().unwrap_or(std::path::Path::new(".")));
+        let _ = std::fs::write(&path, &text);
+        crate::tray::message_box(&format!("程序出错，已写入\n{}", path.display()));
+    }));
 }
 
 fn run() -> Result<()> {

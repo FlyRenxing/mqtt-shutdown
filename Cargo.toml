@@ -5,8 +5,8 @@ edition = "2024"
 rust-version = "1.95"
 description = "Subscribe to MQTT and remotely shut down or reboot this Windows PC"
 license = "MIT"
-repository = "https://github.com/renxing/mqtt-shutdown"
-homepage = "https://github.com/renxing/mqtt-shutdown"
+repository = "https://github.com/FlyRenxing/mqtt-shutdown"
+homepage = "https://github.com/FlyRenxing/mqtt-shutdown"
 readme = "README.md"
 publish = false
 

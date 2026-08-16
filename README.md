@@ -4,7 +4,7 @@
 
 订阅 MQTT 主题，按指令关闭或重启这台 Windows 电脑。关闭窗口后会留在托盘继续运行。
 
-仓库：<https://github.com/renxing/mqtt-shutdown>
+仓库：<https://github.com/FlyRenxing/mqtt-shutdown>
 
 ## 功能
 
