@@ -1,4 +1,4 @@
-# Build a self-contained payload and wrap it as a single MQTT关机.exe
+# Build a self-contained payload and wrap it as a single mqtt-shutdown.exe
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
@@ -52,7 +52,7 @@ if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 $dist = Join-Path $root "dist"
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
-$out = Join-Path $dist "MQTT关机.exe"
+$out = Join-Path $dist "mqtt-shutdown.exe"
 Copy-Item (Join-Path $root "target\stub\release\mqtt-shutdown-stub.exe") $out -Force
 Write-Host "Packed $out"
 Get-Item $out | Select-Object FullName, Length, LastWriteTime

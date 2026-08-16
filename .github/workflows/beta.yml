@@ -41,10 +41,10 @@ jobs:
           allowUpdates: true
           replacesArtifacts: true
           makeLatest: false
-          artifacts: dist/MQTT关机.exe
+          artifacts: dist/mqtt-shutdown.exe
           body: |
             自动构建的预发布包。
 
             - 提交：`${{ github.sha }}`
-            - 下载 `MQTT关机.exe` 即可运行（首次启动会解压 WinUI 运行时到 `%LOCALAPPDATA%\MqttShutdown\runtime`）
+            - 下载 `mqtt-shutdown.exe` 即可运行（首次启动会解压 WinUI 运行时到 `%LOCALAPPDATA%\MqttShutdown\runtime`）
             - 关闭窗口后会留在托盘

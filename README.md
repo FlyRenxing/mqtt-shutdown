@@ -30,7 +30,7 @@
 
 ## 运行
 
-到 [Releases / Beta](https://github.com/FlyRenxing/mqtt-shutdown/releases/tag/beta) 下载 `MQTT关机.exe`。第一次启动会把 WinUI 运行时解压到 `%LOCALAPPDATA%\MqttShutdown\runtime`，之后可直接用。
+到 [Releases / Beta](https://github.com/FlyRenxing/mqtt-shutdown/releases/tag/beta) 下载 `mqtt-shutdown.exe`。第一次启动会把 WinUI 运行时解压到 `%LOCALAPPDATA%\MqttShutdown\runtime`，之后可直接用。
 
 1. 打开后先到「连接」页填写服务器、Client ID 和主题。
 2. 加 `--hidden` 时只进托盘，不弹出主窗口（开机自启会这样启动）。
@@ -62,7 +62,7 @@ cargo build --release
 powershell -ExecutionPolicy Bypass -File tools\pack.ps1
 ```
 
-生成 `dist\MQTT关机.exe`。推送到 `main` 后，GitHub Actions 会自动做同样的打包并更新 [Beta](https://github.com/FlyRenxing/mqtt-shutdown/releases/tag/beta)。
+生成 `dist\mqtt-shutdown.exe`。推送到 `main` 后，GitHub Actions 会自动做同样的打包并更新 [Beta](https://github.com/FlyRenxing/mqtt-shutdown/releases/tag/beta)。
 
 目录约定：
 
