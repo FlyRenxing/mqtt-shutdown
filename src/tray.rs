@@ -13,8 +13,9 @@ use windows_sys::Win32::UI::Shell::{
 };
 use windows_sys::Win32::UI::WindowsAndMessaging::{
     AppendMenuW, CallNextHookEx, CreatePopupMenu, CreateWindowExW, DefWindowProcW, DestroyMenu,
-    DestroyWindow, DispatchMessageW, FindWindowW, GetCursorPos, GetWindowLongPtrW, ICON_BIG,
-    ICON_SMALL, IDI_APPLICATION, IMAGE_ICON, LR_DEFAULTSIZE, LR_LOADFROMFILE, LoadIconW,
+    DestroyWindow, DispatchMessageW, EnumThreadWindows, FindWindowW, GW_OWNER, GetClassNameW,
+    GetCursorPos, GetWindow, GetWindowLongPtrW, GetWindowTextW, ICON_BIG, ICON_SMALL,
+    IDI_APPLICATION, IMAGE_ICON, IsWindowVisible, LR_DEFAULTSIZE, LR_LOADFROMFILE, LoadIconW,
     LoadImageW, MF_CHECKED, MF_SEPARATOR, MF_STRING, MSG, PM_REMOVE, PeekMessageW, PostMessageW,
     PostQuitMessage, RegisterClassW, SW_HIDE, SW_RESTORE, SW_SHOW, SWP_NOACTIVATE, SWP_NOMOVE,
     SWP_NOSIZE, SWP_NOZORDER, SendMessageW, SetForegroundWindow, SetWindowLongPtrW, SetWindowPos,
@@ -39,6 +40,7 @@ static TRAY_HWND: AtomicPtr<core::ffi::c_void> = AtomicPtr::new(core::ptr::null_
 static TRAY_ADDED: AtomicBool = AtomicBool::new(false);
 static CBT_HOOK: AtomicPtr<core::ffi::c_void> = AtomicPtr::new(core::ptr::null_mut());
 static SINGLE_INSTANCE: OnceLock<isize> = OnceLock::new();
+static APP_WINDOW: OnceLock<crate::app_window::AppWindowHandle> = OnceLock::new();
 
 const APP_USER_MODEL_ID: &str = "FlyRenxing.MqttShutdown";
 const IDI_APP: isize = 1;
@@ -74,16 +76,34 @@ pub fn attach_main_window() -> bool {
     if !MAIN_HWND.load(Ordering::SeqCst).is_null() {
         return true;
     }
-    let hwnd = find_window_by_title(APP_TITLE);
+    let hwnd = find_main_hwnd();
     if hwnd.is_null() {
         return false;
     }
     MAIN_HWND.store(hwnd, Ordering::SeqCst);
     apply_window_icon(hwnd);
+    install_close_hook(hwnd);
     install_cbt_hook();
     create_message_window();
     add_or_update_tray();
     true
+}
+
+fn install_close_hook(hwnd: HWND) {
+    let Some(app) = crate::app_window::AppWindowHandle::from_hwnd(hwnd) else {
+        return;
+    };
+    let hooked = app.hook_close(|| {
+        if ALLOW_EXIT.load(Ordering::SeqCst) {
+            true
+        } else {
+            hide_to_tray();
+            false
+        }
+    });
+    if hooked {
+        let _ = APP_WINDOW.set(app);
+    }
 }
 
 fn apply_window_icon(hwnd: HWND) {
@@ -104,6 +124,9 @@ pub fn hide_to_tray() {
     if hwnd.is_null() {
         return;
     }
+    if let Some(app) = APP_WINDOW.get() {
+        app.hide();
+    }
     unsafe {
         let style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
         SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style | WS_EX_TOOLWINDOW as isize);
@@ -116,6 +139,9 @@ pub fn show_main_window() {
     let hwnd = MAIN_HWND.load(Ordering::SeqCst);
     if hwnd.is_null() {
         return;
+    }
+    if let Some(app) = APP_WINDOW.get() {
+        app.show();
     }
     unsafe {
         let style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
@@ -403,6 +429,50 @@ fn show_tray_menu(hwnd: HWND) {
         PostMessageW(hwnd, WM_NULL, 0, 0);
         DestroyMenu(menu);
     }
+}
+
+fn find_main_hwnd() -> HWND {
+    let mut found: HWND = core::ptr::null_mut();
+    unsafe {
+        let _ = EnumThreadWindows(
+            GetCurrentThreadId(),
+            Some(enum_main_hwnd),
+            &mut found as *mut HWND as LPARAM,
+        );
+    }
+    if !found.is_null() {
+        return found;
+    }
+    find_window_by_title(APP_TITLE)
+}
+
+unsafe extern "system" fn enum_main_hwnd(hwnd: HWND, lparam: LPARAM) -> i32 {
+    let skip = TRAY_HWND.load(Ordering::SeqCst);
+    if hwnd == skip {
+        return 1;
+    }
+    unsafe {
+        if !GetWindow(hwnd, GW_OWNER).is_null() {
+            return 1;
+        }
+        if IsWindowVisible(hwnd) == 0 {
+            return 1;
+        }
+        let mut class = [0u16; 64];
+        GetClassNameW(hwnd, class.as_mut_ptr(), class.len() as i32);
+        let class_name = String::from_utf16_lossy(&class)
+            .trim_end_matches('\0')
+            .to_string();
+        if class_name == message_class() {
+            return 1;
+        }
+        let mut title = [0u16; 256];
+        if GetWindowTextW(hwnd, title.as_mut_ptr(), title.len() as i32) <= 0 {
+            return 1;
+        }
+        *(lparam as *mut HWND) = hwnd;
+    }
+    0
 }
 
 fn find_window_by_title(title: &str) -> HWND {

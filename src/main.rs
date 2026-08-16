@@ -1,5 +1,6 @@
 #![windows_subsystem = "windows"]
 
+mod app_window;
 mod autostart;
 mod config;
 mod mqtt;
