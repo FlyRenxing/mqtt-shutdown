@@ -36,6 +36,22 @@ Get-ChildItem $rel -Force | ForEach-Object {
     }
 }
 
+$bootstrapNames = @(
+    "microsoft.windowsappruntime.bootstrap.dll",
+    "Microsoft.WindowsAppRuntime.Bootstrap.dll"
+)
+$bootstrapInStage = $bootstrapNames | ForEach-Object { Join-Path $stage $_ } | Where-Object { Test-Path $_ }
+if (-not $bootstrapInStage) {
+    $fallback = @(
+        ($bootstrapNames | ForEach-Object { Join-Path $rel $_ }),
+        (Join-Path $root "..\vendor\windows-rs\crates\libs\reactor-setup\bootstrap\x64\Microsoft.WindowsAppRuntime.Bootstrap.dll")
+    ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+    if (-not $fallback) {
+        throw "microsoft.windowsappruntime.bootstrap.dll missing from build output"
+    }
+    Copy-Item $fallback (Join-Path $stage "microsoft.windowsappruntime.bootstrap.dll")
+}
+
 if (-not (Test-Path (Join-Path $stage "mqtt-shutdown.exe"))) {
     throw "mqtt-shutdown.exe missing from stage"
 }

@@ -6,10 +6,11 @@ fn main() {
 
     let _ = embed_resource::compile("assets/app.rc", embed_resource::NONE);
 
+    // The reactor crate always imports microsoft.windowsappruntime.bootstrap.dll,
+    // even for self-contained apps. as_self_contained() does not copy it.
+    windows_reactor_setup::as_framework_dependent();
     if self_contained() {
         windows_reactor_setup::as_self_contained();
-    } else {
-        windows_reactor_setup::as_framework_dependent();
     }
 }
 
